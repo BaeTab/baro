@@ -1,0 +1,380 @@
+import { useRef, useState } from 'react'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
+
+export default function PreviewPanel({ data, t }) {
+    const docRef = useRef()
+    const [isGenerating, setIsGenerating] = useState(false)
+
+    const calculateTotals = () => {
+        let subtotal = data.items.reduce((sum, item) => sum + (item.qty * item.unitPrice), 0)
+        let tax = 0
+        let grandTotal = 0
+
+        if (data.isTaxIncluded) {
+            grandTotal = subtotal
+            subtotal = Math.round(grandTotal / 1.1)
+            tax = grandTotal - subtotal
+        } else {
+            tax = Math.round(subtotal * data.taxRate)
+            grandTotal = subtotal + tax
+        }
+        return { subtotal, tax, grandTotal }
+    }
+
+    const { subtotal, tax, grandTotal } = calculateTotals()
+
+    const handleDownload = async () => {
+        const adConfirmed = window.confirm("PDF를 다운로드하려면 먼저 스폰서 페이지를 방문해주세요.\n확인을 클릭하면 PDF가 생성됩니다.")
+        if (adConfirmed) {
+            window.open('https://deg.kr/799c1ba', '_blank')
+
+            setIsGenerating(true)
+            setTimeout(async () => {
+                const element = docRef.current
+                const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
+                const imgData = canvas.toDataURL('image/png')
+
+                const pdf = new jsPDF('p', 'mm', 'a4')
+                const pdfWidth = pdf.internal.pageSize.getWidth()
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width
+
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
+                pdf.save(`${data.docType}_${data.customer || 'Draft'}.pdf`)
+                setIsGenerating(false)
+            }, 1000)
+        }
+    }
+
+    const styles = {
+        paper: {
+            width: '210mm',
+            minHeight: '297mm',
+            background: '#ffffff',
+            padding: '15mm 20mm',
+            position: 'relative',
+            boxSizing: 'border-box',
+            fontFamily: '"Pretendard", "Noto Sans KR", -apple-system, BlinkMacSystemFont, sans-serif',
+            color: '#1a1a1a',
+            fontSize: '11px',
+            lineHeight: '1.6'
+        },
+        header: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: '30px',
+            paddingBottom: '20px',
+            borderBottom: '3px solid #2563eb'
+        },
+        titleSection: {
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px'
+        },
+        title: {
+            fontSize: '32px',
+            fontWeight: '800',
+            color: '#1e3a5f',
+            letterSpacing: '0.1em',
+            margin: 0
+        },
+        docMeta: {
+            fontSize: '11px',
+            color: '#6b7280'
+        },
+        infoGrid: {
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '24px',
+            marginBottom: '24px'
+        },
+        infoBox: {
+            background: '#f8fafc',
+            borderRadius: '8px',
+            padding: '16px 20px',
+            border: '1px solid #e2e8f0'
+        },
+        infoTitle: {
+            fontSize: '10px',
+            fontWeight: '700',
+            color: '#64748b',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            marginBottom: '12px',
+            paddingBottom: '8px',
+            borderBottom: '1px solid #e2e8f0'
+        },
+        infoName: {
+            fontSize: '16px',
+            fontWeight: '700',
+            color: '#1e293b',
+            marginBottom: '8px'
+        },
+        infoDetail: {
+            fontSize: '11px',
+            color: '#475569',
+            lineHeight: '1.8'
+        },
+        table: {
+            width: '100%',
+            borderCollapse: 'collapse',
+            marginBottom: '24px'
+        },
+        th: {
+            background: '#1e3a5f',
+            color: '#ffffff',
+            padding: '12px 8px',
+            fontSize: '10px',
+            fontWeight: '600',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em'
+        },
+        td: {
+            padding: '14px 8px',
+            borderBottom: '1px solid #e2e8f0',
+            fontSize: '11px',
+            color: '#334155'
+        },
+        tdAlt: {
+            padding: '14px 8px',
+            borderBottom: '1px solid #e2e8f0',
+            fontSize: '11px',
+            color: '#334155',
+            background: '#f8fafc'
+        },
+        summaryContainer: {
+            display: 'flex',
+            justifyContent: 'flex-end',
+            marginBottom: '32px'
+        },
+        summaryBox: {
+            width: '280px',
+            background: '#f8fafc',
+            borderRadius: '8px',
+            padding: '16px 20px',
+            border: '1px solid #e2e8f0'
+        },
+        summaryRow: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            padding: '8px 0',
+            fontSize: '12px',
+            color: '#475569'
+        },
+        totalRow: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            padding: '12px 0',
+            marginTop: '8px',
+            borderTop: '2px solid #1e3a5f',
+            fontSize: '16px',
+            fontWeight: '700',
+            color: '#1e3a5f'
+        },
+        notesBox: {
+            background: '#fffbeb',
+            border: '1px solid #fef3c7',
+            borderRadius: '8px',
+            padding: '16px 20px',
+            marginBottom: '32px'
+        },
+        notesTitle: {
+            fontSize: '10px',
+            fontWeight: '700',
+            color: '#92400e',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            marginBottom: '8px'
+        },
+        notesText: {
+            fontSize: '11px',
+            color: '#78716c',
+            lineHeight: '1.8'
+        },
+        footer: {
+            textAlign: 'center',
+            paddingTop: '24px',
+            borderTop: '1px solid #e2e8f0'
+        },
+        greeting: {
+            fontSize: '13px',
+            fontWeight: '500',
+            color: '#475569',
+            marginBottom: '8px'
+        },
+        companyName: {
+            fontSize: '10px',
+            color: '#94a3b8',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase'
+        },
+        stampArea: {
+            position: 'absolute',
+            right: '40px',
+            top: '160px',
+            width: '70px',
+            height: '70px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+        },
+        stampImage: {
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            opacity: 0.9
+        },
+        stampPlaceholder: {
+            width: '100%',
+            height: '100%',
+            border: '2px dashed #cbd5e1',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#94a3b8',
+            fontSize: '10px'
+        }
+    }
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', alignItems: 'center' }}>
+            {/* Paper Document */}
+            <div ref={docRef} style={styles.paper}>
+
+                {/* Header */}
+                <div style={styles.header}>
+                    <div style={styles.titleSection}>
+                        <h1 style={styles.title}>
+                            {data.docType === 'QUOTE' ? t.estimateTitle : t.receiptTitle}
+                        </h1>
+                        <div style={styles.docMeta}>
+                            {t.date}: {data.date}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Info Grid */}
+                <div style={styles.infoGrid}>
+                    {/* Recipient */}
+                    <div style={styles.infoBox}>
+                        <div style={styles.infoTitle}>{t.recipient}</div>
+                        <div style={styles.infoName}>{data.customer || '(미입력)'}</div>
+                        <div style={styles.infoDetail}>귀하</div>
+                    </div>
+
+                    {/* Supplier */}
+                    <div style={{ ...styles.infoBox, position: 'relative' }}>
+                        <div style={styles.infoTitle}>{t.supplier}</div>
+                        <div style={styles.infoName}>{data.supplier.name || '(미입력)'}</div>
+                        <div style={styles.infoDetail}>
+                            <div><strong>{t.ownerName}:</strong> {data.supplier.owner}</div>
+                            <div><strong>{t.regLabel}:</strong> {data.supplier.regNum}</div>
+                            <div><strong>{t.address}:</strong> {data.supplier.address}</div>
+                        </div>
+                        {/* Stamp */}
+                        <div style={{ position: 'absolute', right: '12px', bottom: '12px', width: '60px', height: '60px' }}>
+                            {data.stampImage ? (
+                                <img src={data.stampImage} alt="Stamp" style={styles.stampImage} />
+                            ) : (
+                                <div style={styles.stampPlaceholder}>(인)</div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Items Table */}
+                <table style={styles.table}>
+                    <thead>
+                        <tr>
+                            <th style={{ ...styles.th, width: '40px', textAlign: 'center', borderRadius: '6px 0 0 0' }}>No</th>
+                            <th style={{ ...styles.th, textAlign: 'left' }}>{t.tableItem}</th>
+                            <th style={{ ...styles.th, width: '60px', textAlign: 'center' }}>{t.tableQty}</th>
+                            <th style={{ ...styles.th, width: '100px', textAlign: 'right' }}>{t.tablePrice}</th>
+                            <th style={{ ...styles.th, width: '120px', textAlign: 'right', borderRadius: '0 6px 0 0' }}>{t.tableAmount}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.items.map((item, idx) => (
+                            <tr key={item.id}>
+                                <td style={{ ...(idx % 2 === 0 ? styles.td : styles.tdAlt), textAlign: 'center' }}>{idx + 1}</td>
+                                <td style={{ ...(idx % 2 === 0 ? styles.td : styles.tdAlt), textAlign: 'left', fontWeight: '500' }}>{item.name}</td>
+                                <td style={{ ...(idx % 2 === 0 ? styles.td : styles.tdAlt), textAlign: 'center' }}>{item.qty}</td>
+                                <td style={{ ...(idx % 2 === 0 ? styles.td : styles.tdAlt), textAlign: 'right' }}>{item.unitPrice.toLocaleString()}</td>
+                                <td style={{ ...(idx % 2 === 0 ? styles.td : styles.tdAlt), textAlign: 'right', fontWeight: '600' }}>{(item.qty * item.unitPrice).toLocaleString()}</td>
+                            </tr>
+                        ))}
+                        {/* Empty rows for minimum height */}
+                        {[...Array(Math.max(0, 8 - data.items.length))].map((_, i) => (
+                            <tr key={`empty-${i}`}>
+                                <td style={{ ...((data.items.length + i) % 2 === 0 ? styles.td : styles.tdAlt), height: '42px' }}>&nbsp;</td>
+                                <td style={{ ...((data.items.length + i) % 2 === 0 ? styles.td : styles.tdAlt) }}></td>
+                                <td style={{ ...((data.items.length + i) % 2 === 0 ? styles.td : styles.tdAlt) }}></td>
+                                <td style={{ ...((data.items.length + i) % 2 === 0 ? styles.td : styles.tdAlt) }}></td>
+                                <td style={{ ...((data.items.length + i) % 2 === 0 ? styles.td : styles.tdAlt) }}></td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+
+                {/* Summary */}
+                <div style={styles.summaryContainer}>
+                    <div style={styles.summaryBox}>
+                        <div style={styles.summaryRow}>
+                            <span>{t.subtotal}</span>
+                            <span>{subtotal.toLocaleString()} {t.currency}</span>
+                        </div>
+                        <div style={styles.summaryRow}>
+                            <span>{t.tax} {data.isTaxIncluded ? t.taxInc : '(10%)'}</span>
+                            <span>{tax.toLocaleString()} {t.currency}</span>
+                        </div>
+                        <div style={styles.totalRow}>
+                            <span>{t.total}</span>
+                            <span>{grandTotal.toLocaleString()} {t.currency}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Notes */}
+                <div style={styles.notesBox}>
+                    <div style={styles.notesTitle}>{t.notes}</div>
+                    <div style={{ ...styles.notesText, whiteSpace: 'pre-wrap' }}>
+                        {data.notes || '입금계좌: (은행명/계좌번호를 입력해 주세요)\n유효기간: 발행일로부터 30일'}
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div style={styles.footer}>
+                    <div style={styles.greeting}>{t.greeting}</div>
+                    <div style={styles.companyName}>{data.supplier.name || 'Company Name'}</div>
+                </div>
+
+            </div>
+
+            {/* Download Button */}
+            <div style={{ position: 'sticky', bottom: '16px', zIndex: 10, width: '100%', maxWidth: '400px' }}>
+                <button
+                    onClick={handleDownload}
+                    disabled={isGenerating}
+                    style={{
+                        width: '100%',
+                        padding: '16px 24px',
+                        fontSize: '15px',
+                        fontWeight: '600',
+                        color: '#ffffff',
+                        background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                        border: 'none',
+                        borderRadius: '12px',
+                        cursor: isGenerating ? 'not-allowed' : 'pointer',
+                        boxShadow: '0 4px 14px 0 rgba(37, 99, 235, 0.39)',
+                        transition: 'all 0.2s ease',
+                        opacity: isGenerating ? 0.7 : 1
+                    }}
+                >
+                    {isGenerating ? t.generating : t.downloadBtn}
+                </button>
+            </div>
+        </div>
+    )
+}
