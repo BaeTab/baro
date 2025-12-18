@@ -113,13 +113,15 @@ export default function Dashboard() {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-page)' }}>
-            <header style={{
-                padding: '0.75rem 2rem',
+            <header className="dashboard-header" style={{
+                padding: '0.75rem 1rem',
                 background: 'white',
                 borderBottom: '1px solid var(--border)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between'
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.5rem'
             }}>
                 <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', color: 'inherit' }}>
                     <div style={{
@@ -269,14 +271,52 @@ export default function Dashboard() {
                 </div>
             )}
 
-            <main style={{ flex: 1, display: 'grid', gridTemplateColumns: 'minmax(380px, 28%) 1fr', overflow: 'hidden' }}>
-                <div style={{ overflowY: 'auto', padding: '1.25rem', borderRight: '1px solid var(--border)', background: 'white' }}>
+            {/* Mobile Tab Toggle */}
+            <div className="mobile-tabs" style={{
+                display: 'none',
+                background: 'white',
+                borderBottom: '1px solid var(--border)',
+                padding: '0.5rem'
+            }}>
+                <style>{`
+                    @media (max-width: 768px) {
+                        .mobile-tabs { display: flex !important; gap: 0.5rem; }
+                        .mobile-input-panel { display: block !important; }
+                        .mobile-preview-panel { display: none !important; }
+                        .mobile-tabs.show-preview .mobile-input-panel { display: none !important; }
+                        .mobile-tabs.show-preview + main .mobile-input-panel { display: none !important; }
+                        .mobile-tabs.show-preview + main .mobile-preview-panel { display: block !important; }
+                    }
+                `}</style>
+            </div>
+
+            <main className="dashboard-grid" style={{
+                flex: 1,
+                display: 'grid',
+                gridTemplateColumns: 'minmax(320px, 28%) 1fr',
+                overflow: 'hidden'
+            }}>
+                <style>{`
+                    @media (max-width: 768px) {
+                        .dashboard-grid {
+                            grid-template-columns: 1fr !important;
+                        }
+                        .dashboard-input {
+                            max-height: 50vh;
+                        }
+                        .dashboard-preview {
+                            padding: 0.5rem !important;
+                        }
+                    }
+                `}</style>
+                <div className="dashboard-input" style={{ overflowY: 'auto', padding: '1.25rem', borderRight: '1px solid var(--border)', background: 'white' }}>
                     <InputPanel data={data} setData={setData} t={t} />
                 </div>
-                <div style={{ overflowY: 'auto', padding: '2rem', background: '#f1f5f9', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
+                <div className="dashboard-preview" style={{ overflowY: 'auto', padding: '2rem', background: '#f1f5f9', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
                     <PreviewPanel data={data} t={t} />
                 </div>
             </main>
         </div>
     )
 }
+

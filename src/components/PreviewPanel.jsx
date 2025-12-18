@@ -48,8 +48,9 @@ export default function PreviewPanel({ data, t }) {
 
     const styles = {
         paper: {
-            width: '210mm',
-            minHeight: '297mm',
+            width: '100%',
+            maxWidth: '210mm',
+            minHeight: 'auto',
             background: '#ffffff',
             padding: '15mm 20mm',
             position: 'relative',
@@ -57,7 +58,9 @@ export default function PreviewPanel({ data, t }) {
             fontFamily: '"Pretendard", "Noto Sans KR", -apple-system, BlinkMacSystemFont, sans-serif',
             color: '#1a1a1a',
             fontSize: '11px',
-            lineHeight: '1.6'
+            lineHeight: '1.6',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            borderRadius: '4px'
         },
         header: {
             display: 'flex',
