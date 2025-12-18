@@ -7,14 +7,18 @@ import { useAuth } from '../contexts/AuthContext'
 import { saveEstimate, saveTemplate } from '../services/firestoreService'
 
 export default function Dashboard() {
-    const { user, loginWithGoogle } = useAuth()
+    const { user, loginWithGoogle, logout } = useAuth()
     const [lang, setLang] = useState('ko')
     const t = translations[lang]
     const [saving, setSaving] = useState(false)
     const [saveMessage, setSaveMessage] = useState('')
+    const [showMobilePreview, setShowMobilePreview] = useState(false)
+    const [showProfileMenu, setShowProfileMenu] = useState(false)
 
     const [data, setData] = useState({
         docType: 'QUOTE',
+        layout: 'classic',
+        colorScheme: 'blue',
         supplier: {
             name: '',
             regNum: '',
@@ -136,14 +140,31 @@ export default function Dashboard() {
                         fontWeight: 'bold',
                         fontSize: '18px'
                     }}>B</div>
-                    <div>
+                    <div className="header-title" style={{ display: 'block' }}>
                         <h1 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>{t.appTitle}</h1>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{t.appSubtitle}</div>
+                        <div className="header-subtitle" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{t.appSubtitle}</div>
                     </div>
                 </Link>
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                <div className="header-actions" style={{
+                    display: 'flex',
+                    gap: '0.5rem',
+                    alignItems: 'center',
+                    overflowX: 'auto',
+                    flexShrink: 0
+                }}>
+                    <style>{`
+                        @media (max-width: 768px) {
+                            .header-title { display: none !important; }
+                            .header-actions { gap: 0.25rem !important; }
+                            .header-btn { 
+                                padding: 0.3rem 0.5rem !important; 
+                                font-size: 0.7rem !important;
+                            }
+                        }
+                    `}</style>
                     {/* Save Buttons */}
                     <button
+                        className="header-btn"
                         onClick={handleSaveEstimate}
                         disabled={saving}
                         style={{
@@ -154,12 +175,14 @@ export default function Dashboard() {
                             border: 'none',
                             borderRadius: '6px',
                             cursor: 'pointer',
-                            fontWeight: '500'
+                            fontWeight: '500',
+                            whiteSpace: 'nowrap'
                         }}
                     >
                         💾 저장
                     </button>
                     <button
+                        className="header-btn"
                         onClick={handleSaveTemplate}
                         disabled={saving}
                         style={{
@@ -170,14 +193,16 @@ export default function Dashboard() {
                             border: 'none',
                             borderRadius: '6px',
                             cursor: 'pointer',
-                            fontWeight: '500'
+                            fontWeight: '500',
+                            whiteSpace: 'nowrap'
                         }}
                     >
-                        📋 템플릿
+                        📋
                     </button>
 
                     {/* My Estimates Link */}
                     <Link
+                        className="header-btn"
                         to="/my"
                         style={{
                             padding: '0.4rem 0.75rem',
@@ -187,22 +212,121 @@ export default function Dashboard() {
                             border: 'none',
                             borderRadius: '6px',
                             textDecoration: 'none',
-                            fontWeight: '500'
+                            fontWeight: '500',
+                            whiteSpace: 'nowrap'
                         }}
                     >
-                        📂 내 견적서
+                        📂
+                    </Link>
+
+                    {/* Customers Link */}
+                    <Link
+                        className="header-btn"
+                        to="/customers"
+                        style={{
+                            padding: '0.4rem 0.75rem',
+                            fontSize: '0.8rem',
+                            background: '#f1f5f9',
+                            color: '#64748b',
+                            border: 'none',
+                            borderRadius: '6px',
+                            textDecoration: 'none',
+                            fontWeight: '500',
+                            whiteSpace: 'nowrap'
+                        }}
+                    >
+                        👥
                     </Link>
 
                     {/* User/Login */}
                     {user ? (
-                        <img
-                            src={user.photoURL || 'https://via.placeholder.com/32'}
-                            alt="Profile"
-                            style={{ width: 32, height: 32, borderRadius: '50%' }}
-                            title={user.displayName}
-                        />
+                        <div style={{ position: 'relative' }}>
+                            <img
+                                src={user.photoURL || 'https://via.placeholder.com/32'}
+                                alt="Profile"
+                                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                                style={{
+                                    width: 28,
+                                    height: 28,
+                                    borderRadius: '50%',
+                                    flexShrink: 0,
+                                    cursor: 'pointer',
+                                    border: showProfileMenu ? '2px solid #2563eb' : '2px solid transparent'
+                                }}
+                                title={user.displayName}
+                            />
+                            {/* Profile Dropdown */}
+                            {showProfileMenu && (
+                                <>
+                                    {/* Backdrop to close menu */}
+                                    <div
+                                        onClick={() => setShowProfileMenu(false)}
+                                        style={{
+                                            position: 'fixed',
+                                            top: 0,
+                                            left: 0,
+                                            right: 0,
+                                            bottom: 0,
+                                            zIndex: 99
+                                        }}
+                                    />
+                                    <div style={{
+                                        position: 'fixed',
+                                        top: '60px',
+                                        right: '16px',
+                                        background: 'white',
+                                        borderRadius: '8px',
+                                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                                        border: '1px solid #e2e8f0',
+                                        minWidth: '200px',
+                                        zIndex: 100,
+                                        overflow: 'hidden'
+                                    }}>
+                                        {/* User Info */}
+                                        <div style={{
+                                            padding: '12px 16px',
+                                            borderBottom: '1px solid #e2e8f0',
+                                            background: '#f8fafc'
+                                        }}>
+                                            <div style={{ fontWeight: '600', fontSize: '0.85rem', color: '#1e293b' }}>
+                                                {user.displayName}
+                                            </div>
+                                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                                                {user.email}
+                                            </div>
+                                        </div>
+                                        {/* Logout Button */}
+                                        <button
+                                            onClick={() => {
+                                                logout()
+                                                setShowProfileMenu(false)
+                                            }}
+                                            style={{
+                                                width: '100%',
+                                                padding: '10px 16px',
+                                                background: 'white',
+                                                border: 'none',
+                                                textAlign: 'left',
+                                                cursor: 'pointer',
+                                                fontSize: '0.85rem',
+                                                color: '#dc2626',
+                                                fontWeight: '500',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px'
+                                            }}
+                                            onMouseOver={(e) => e.target.style.background = '#fef2f2'}
+                                            onMouseOut={(e) => e.target.style.background = 'white'}
+                                        >
+                                            🚪 로그아웃
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     ) : (
                         <button
+                            className="header-btn"
                             onClick={loginWithGoogle}
                             style={{
                                 padding: '0.4rem 0.75rem',
@@ -212,20 +336,21 @@ export default function Dashboard() {
                                 border: '1px solid #e2e8f0',
                                 borderRadius: '6px',
                                 cursor: 'pointer',
-                                fontWeight: '500'
+                                fontWeight: '500',
+                                whiteSpace: 'nowrap'
                             }}
                         >
-                            로그인
+                            🔐
                         </button>
                     )}
 
                     {/* Language Toggle */}
-                    <div style={{ display: 'flex', gap: '0.25rem', marginLeft: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.15rem', flexShrink: 0 }}>
                         <button
                             onClick={() => setLang('ko')}
                             style={{
-                                padding: '0.35rem 0.5rem',
-                                fontSize: '0.75rem',
+                                padding: '0.3rem 0.4rem',
+                                fontSize: '0.7rem',
                                 background: lang === 'ko' ? '#2563eb' : '#f1f5f9',
                                 color: lang === 'ko' ? 'white' : '#64748b',
                                 border: 'none',
@@ -238,8 +363,8 @@ export default function Dashboard() {
                         <button
                             onClick={() => setLang('en')}
                             style={{
-                                padding: '0.35rem 0.5rem',
-                                fontSize: '0.75rem',
+                                padding: '0.3rem 0.4rem',
+                                fontSize: '0.7rem',
                                 background: lang === 'en' ? '#2563eb' : '#f1f5f9',
                                 color: lang === 'en' ? 'white' : '#64748b',
                                 border: 'none',
@@ -271,24 +396,66 @@ export default function Dashboard() {
                 </div>
             )}
 
-            {/* Mobile Tab Toggle */}
-            <div className="mobile-tabs" style={{
-                display: 'none',
-                background: 'white',
-                borderBottom: '1px solid var(--border)',
-                padding: '0.5rem'
-            }}>
-                <style>{`
-                    @media (max-width: 768px) {
-                        .mobile-tabs { display: flex !important; gap: 0.5rem; }
-                        .mobile-input-panel { display: block !important; }
-                        .mobile-preview-panel { display: none !important; }
-                        .mobile-tabs.show-preview .mobile-input-panel { display: none !important; }
-                        .mobile-tabs.show-preview + main .mobile-input-panel { display: none !important; }
-                        .mobile-tabs.show-preview + main .mobile-preview-panel { display: block !important; }
-                    }
-                `}</style>
-            </div>
+            {/* Mobile Preview Modal */}
+            {showMobilePreview && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0,0,0,0.9)',
+                    zIndex: 2000,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden'
+                }}>
+                    {/* Modal Header */}
+                    <div style={{
+                        padding: '0.75rem 1rem',
+                        background: 'white',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        borderBottom: '1px solid #e2e8f0',
+                        flexShrink: 0
+                    }}>
+                        <div>
+                            <span style={{ fontWeight: '700', fontSize: '1rem' }}>📄 미리보기</span>
+                            <div style={{ fontSize: '0.7rem', color: '#64748b' }}>좌우로 스크롤하여 전체 보기</div>
+                        </div>
+                        <button
+                            onClick={() => setShowMobilePreview(false)}
+                            style={{
+                                padding: '0.5rem 1rem',
+                                background: '#f1f5f9',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontWeight: '600'
+                            }}
+                        >
+                            ✕ 닫기
+                        </button>
+                    </div>
+                    {/* Modal Content - Scrollable both directions */}
+                    <div style={{
+                        flex: 1,
+                        overflow: 'auto',
+                        WebkitOverflowScrolling: 'touch',
+                        padding: '1rem',
+                        background: '#f1f5f9'
+                    }}>
+                        <div style={{
+                            minWidth: 'fit-content',
+                            display: 'flex',
+                            justifyContent: 'flex-start'
+                        }}>
+                            <PreviewPanel data={data} t={t} />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <main className="dashboard-grid" style={{
                 flex: 1,
@@ -301,18 +468,56 @@ export default function Dashboard() {
                         .dashboard-grid {
                             grid-template-columns: 1fr !important;
                         }
-                        .dashboard-input {
-                            max-height: 50vh;
+                        .dashboard-preview-desktop {
+                            display: none !important;
                         }
-                        .dashboard-preview {
-                            padding: 0.5rem !important;
+                        .mobile-preview-btn {
+                            display: flex !important;
                         }
                     }
                 `}</style>
-                <div className="dashboard-input" style={{ overflowY: 'auto', padding: '1.25rem', borderRight: '1px solid var(--border)', background: 'white' }}>
+                <div className="dashboard-input" style={{
+                    overflowY: 'auto',
+                    padding: '1.25rem',
+                    borderRight: '1px solid var(--border)',
+                    background: 'white',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}>
                     <InputPanel data={data} setData={setData} t={t} />
+
+                    {/* Mobile Preview Button - Only visible on mobile */}
+                    <button
+                        className="mobile-preview-btn"
+                        onClick={() => setShowMobilePreview(true)}
+                        style={{
+                            display: 'none',
+                            marginTop: '1.5rem',
+                            padding: '1rem',
+                            background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '12px',
+                            fontSize: '1rem',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem',
+                            boxShadow: '0 4px 15px rgba(37, 99, 235, 0.3)'
+                        }}
+                    >
+                        📄 견적서 미리보기 & 다운로드
+                    </button>
                 </div>
-                <div className="dashboard-preview" style={{ overflowY: 'auto', padding: '2rem', background: '#f1f5f9', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
+                <div className="dashboard-preview-desktop" style={{
+                    overflowY: 'auto',
+                    padding: '2rem',
+                    background: '#f1f5f9',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'flex-start'
+                }}>
                     <PreviewPanel data={data} t={t} />
                 </div>
             </main>

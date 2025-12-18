@@ -126,3 +126,27 @@ export async function getUserProfile(userId) {
     }
     return null
 }
+
+// ========== 저장된 품목 (Saved Items) ==========
+
+export async function saveItem(userId, itemData) {
+    const itemsRef = collection(db, 'users', userId, 'savedItems')
+    const docRef = await addDoc(itemsRef, {
+        name: itemData.name,
+        unitPrice: itemData.unitPrice || 0,
+        createdAt: serverTimestamp()
+    })
+    return docRef.id
+}
+
+export async function getSavedItems(userId) {
+    const itemsRef = collection(db, 'users', userId, 'savedItems')
+    const q = query(itemsRef, orderBy('name', 'asc'))
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+}
+
+export async function deleteSavedItem(userId, itemId) {
+    const docRef = doc(db, 'users', userId, 'savedItems', itemId)
+    await deleteDoc(docRef)
+}

@@ -1,10 +1,16 @@
 import { useRef, useState } from 'react'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
+import { getLayoutById, getColorById } from '../data/designTemplates'
 
 export default function PreviewPanel({ data, t }) {
     const docRef = useRef()
     const [isGenerating, setIsGenerating] = useState(false)
+
+    // Get selected layout and color scheme independently
+    const layout = getLayoutById(data.layout || 'classic')
+    const colors = getColorById(data.colorScheme || 'blue')
+
 
     const calculateTotals = () => {
         let subtotal = data.items.reduce((sum, item) => sum + (item.qty * item.unitPrice), 0)
@@ -46,45 +52,67 @@ export default function PreviewPanel({ data, t }) {
         }
     }
 
+    // Dynamic header style based on layout
+    const getHeaderStyle = () => {
+        const base = {
+            marginBottom: '30px',
+            paddingBottom: '20px',
+        }
+        if (layout.headerStyle === 'center') {
+            return { ...base, textAlign: 'center', borderBottom: layout.showDivider ? `3px solid ${colors.secondary}` : 'none' }
+        } else if (layout.headerStyle === 'left') {
+            return { ...base, textAlign: 'left', borderBottom: layout.showDivider ? `2px solid ${colors.border}` : 'none' }
+        }
+        // split (default)
+        return {
+            ...base,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            borderBottom: layout.showDivider ? `3px solid ${colors.secondary}` : 'none'
+        }
+    }
+
     const styles = {
-        paper: {
+        // Wrapper for mobile scaling
+        wrapper: {
             width: '100%',
-            maxWidth: '210mm',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+        },
+        paper: {
+            width: '210mm',
+            minWidth: '210mm',
             minHeight: 'auto',
             background: '#ffffff',
             padding: '15mm 20mm',
             position: 'relative',
             boxSizing: 'border-box',
             fontFamily: '"Pretendard", "Noto Sans KR", -apple-system, BlinkMacSystemFont, sans-serif',
-            color: '#1a1a1a',
+            color: colors.text,
             fontSize: '11px',
             lineHeight: '1.6',
             boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-            borderRadius: '4px'
+            borderRadius: '4px',
+            transformOrigin: 'top center'
         },
-        header: {
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            marginBottom: '30px',
-            paddingBottom: '20px',
-            borderBottom: '3px solid #2563eb'
-        },
+        header: getHeaderStyle(),
         titleSection: {
             display: 'flex',
             flexDirection: 'column',
             gap: '4px'
         },
         title: {
-            fontSize: '32px',
+            fontSize: layout.titleSize,
             fontWeight: '800',
-            color: '#1e3a5f',
+            color: colors.primary,
             letterSpacing: '0.1em',
             margin: 0
         },
         docMeta: {
             fontSize: '11px',
-            color: '#6b7280'
+            color: colors.muted
         },
         infoGrid: {
             display: 'grid',
@@ -93,58 +121,64 @@ export default function PreviewPanel({ data, t }) {
             marginBottom: '24px'
         },
         infoBox: {
-            background: '#f8fafc',
-            borderRadius: '8px',
+            background: layout.infoBoxStyle === 'flat' ? 'transparent' : colors.accent,
+            borderRadius: layout.borderRadius,
             padding: '16px 20px',
-            border: '1px solid #e2e8f0'
+            border: layout.infoBoxStyle === 'flat' ? 'none' : `1px solid ${colors.border}`
         },
         infoTitle: {
             fontSize: '10px',
             fontWeight: '700',
-            color: '#64748b',
+            color: colors.muted,
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
             marginBottom: '12px',
             paddingBottom: '8px',
-            borderBottom: '1px solid #e2e8f0'
+            borderBottom: `1px solid ${colors.border}`
         },
         infoName: {
             fontSize: '16px',
             fontWeight: '700',
-            color: '#1e293b',
+            color: colors.text,
             marginBottom: '8px'
         },
         infoDetail: {
             fontSize: '11px',
-            color: '#475569',
+            color: colors.muted,
             lineHeight: '1.8'
         },
         table: {
             width: '100%',
             borderCollapse: 'collapse',
-            marginBottom: '24px'
+            marginBottom: '24px',
+            borderRadius: layout.borderRadius,
+            overflow: 'hidden'
         },
         th: {
-            background: '#1e3a5f',
-            color: '#ffffff',
+            background: colors.headerBg,
+            color: colors.headerText,
             padding: '12px 8px',
             fontSize: '10px',
             fontWeight: '600',
             textTransform: 'uppercase',
-            letterSpacing: '0.05em'
+            letterSpacing: '0.05em',
+            textAlign: 'center',
+            border: layout.tableStyle === 'bordered' ? `1px solid ${colors.border}` : 'none'
         },
         td: {
             padding: '14px 8px',
-            borderBottom: '1px solid #e2e8f0',
+            borderBottom: `1px solid ${colors.border}`,
             fontSize: '11px',
-            color: '#334155'
+            color: colors.text,
+            border: layout.tableStyle === 'bordered' ? `1px solid ${colors.border}` : 'none'
         },
         tdAlt: {
             padding: '14px 8px',
-            borderBottom: '1px solid #e2e8f0',
+            borderBottom: `1px solid ${colors.border}`,
             fontSize: '11px',
-            color: '#334155',
-            background: '#f8fafc'
+            color: colors.text,
+            background: layout.tableStyle === 'striped' ? colors.accent : 'transparent',
+            border: layout.tableStyle === 'bordered' ? `1px solid ${colors.border}` : 'none'
         },
         summaryContainer: {
             display: 'flex',
@@ -153,32 +187,32 @@ export default function PreviewPanel({ data, t }) {
         },
         summaryBox: {
             width: '280px',
-            background: '#f8fafc',
-            borderRadius: '8px',
+            background: colors.accent,
+            borderRadius: layout.borderRadius,
             padding: '16px 20px',
-            border: '1px solid #e2e8f0'
+            border: `1px solid ${colors.border}`
         },
         summaryRow: {
             display: 'flex',
             justifyContent: 'space-between',
             padding: '8px 0',
             fontSize: '12px',
-            color: '#475569'
+            color: colors.muted
         },
         totalRow: {
             display: 'flex',
             justifyContent: 'space-between',
             padding: '12px 0',
             marginTop: '8px',
-            borderTop: '2px solid #1e3a5f',
+            borderTop: `2px solid ${colors.primary}`,
             fontSize: '16px',
             fontWeight: '700',
-            color: '#1e3a5f'
+            color: colors.primary
         },
         notesBox: {
-            background: '#fffbeb',
-            border: '1px solid #fef3c7',
-            borderRadius: '8px',
+            background: colors.accent,
+            border: `1px solid ${colors.border}`,
+            borderRadius: layout.borderRadius,
             padding: '16px 20px',
             marginBottom: '32px'
         },
@@ -292,10 +326,10 @@ export default function PreviewPanel({ data, t }) {
                     <thead>
                         <tr>
                             <th style={{ ...styles.th, width: '40px', textAlign: 'center', borderRadius: '6px 0 0 0' }}>No</th>
-                            <th style={{ ...styles.th, textAlign: 'left' }}>{t.tableItem}</th>
+                            <th style={{ ...styles.th, textAlign: 'center' }}>{t.tableItem}</th>
                             <th style={{ ...styles.th, width: '60px', textAlign: 'center' }}>{t.tableQty}</th>
-                            <th style={{ ...styles.th, width: '100px', textAlign: 'right' }}>{t.tablePrice}</th>
-                            <th style={{ ...styles.th, width: '120px', textAlign: 'right', borderRadius: '0 6px 0 0' }}>{t.tableAmount}</th>
+                            <th style={{ ...styles.th, width: '100px', textAlign: 'center' }}>{t.tablePrice}</th>
+                            <th style={{ ...styles.th, width: '120px', textAlign: 'center', borderRadius: '0 6px 0 0' }}>{t.tableAmount}</th>
                         </tr>
                     </thead>
                     <tbody>

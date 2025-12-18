@@ -5,6 +5,7 @@ import Dashboard from './components/Dashboard'
 import BlogList from './components/BlogList'
 import BlogPost from './components/BlogPost'
 import MyEstimates from './components/MyEstimates'
+import Customers from './components/Customers'
 import PrivacyPolicy from './components/PrivacyPolicy'
 import TermsOfService from './components/TermsOfService'
 import './index.css'
@@ -17,6 +18,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/app" element={<Dashboard />} />
           <Route path="/my" element={<MyEstimates />} />
+          <Route path="/customers" element={<Customers />} />
           <Route path="/blog" element={<BlogList />} />
           <Route path="/blog/:id" element={<BlogPost />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -28,3 +30,4 @@ function App() {
 }
 
 export default App
+
