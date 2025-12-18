@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getAllLayouts, getAllColors } from '../data/designTemplates'
 import { useAuth } from '../contexts/AuthContext'
-import { getCustomers, getSavedItems, saveItem } from '../services/firestoreService'
+import { getCustomers, getSavedItems, saveItem, getUserProfile, saveUserProfile } from '../services/firestoreService'
 
 export default function InputPanel({ data, setData, t }) {
     const { user, loginWithGoogle } = useAuth()
@@ -13,8 +13,10 @@ export default function InputPanel({ data, setData, t }) {
     const [savedItems, setSavedItems] = useState([])
     const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
     const [itemSuggestions, setItemSuggestions] = useState({})
+    const [savingSupplier, setSavingSupplier] = useState(false)
+    const [supplierSaved, setSupplierSaved] = useState(false)
 
-    // Load customers and saved items when user logs in
+    // Load customers, saved items, and user profile when user logs in
     useEffect(() => {
         if (user) {
             loadUserData()
@@ -23,15 +25,43 @@ export default function InputPanel({ data, setData, t }) {
 
     const loadUserData = async () => {
         try {
-            const [customerList, itemList] = await Promise.all([
+            const [customerList, itemList, profile] = await Promise.all([
                 getCustomers(user.uid),
-                getSavedItems(user.uid)
+                getSavedItems(user.uid),
+                getUserProfile(user.uid)
             ])
             setCustomers(customerList)
             setSavedItems(itemList)
+
+            // Auto-fill supplier info and stamp from saved profile
+            if (profile) {
+                setData(prev => ({
+                    ...prev,
+                    supplier: profile.supplier || prev.supplier,
+                    stampImage: profile.stampImage || prev.stampImage
+                }))
+            }
         } catch (error) {
             console.error('Failed to load user data:', error)
         }
+    }
+
+    // Save supplier info + stamp image
+    const handleSaveSupplier = async () => {
+        if (!user || !data.supplier.name) return
+        setSavingSupplier(true)
+        try {
+            // Save supplier info and stamp together
+            await saveUserProfile(user.uid, {
+                supplier: data.supplier,
+                stampImage: data.stampImage || null  // Base64 string
+            })
+            setSupplierSaved(true)
+            setTimeout(() => setSupplierSaved(false), 2000)
+        } catch (error) {
+            console.error('Failed to save supplier:', error)
+        }
+        setSavingSupplier(false)
     }
 
     // Filter items for suggestions based on input
@@ -67,8 +97,37 @@ export default function InputPanel({ data, setData, t }) {
         const file = e.target.files[0]
         if (file) {
             const reader = new FileReader()
-            reader.onloadend = () => {
-                setData(prev => ({ ...prev, stampImage: reader.result }))
+            reader.onload = (event) => {
+                const img = new Image()
+                img.onload = () => {
+                    const canvas = document.createElement('canvas')
+                    const MAX_WIDTH = 200 // 직인에는 200px 정도면 충분
+                    const MAX_HEIGHT = 200
+                    let width = img.width
+                    let height = img.height
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width
+                            width = MAX_WIDTH
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height
+                            height = MAX_HEIGHT
+                        }
+                    }
+
+                    canvas.width = width
+                    canvas.height = height
+                    const ctx = canvas.getContext('2d')
+                    ctx.drawImage(img, 0, 0, width, height)
+
+                    // Compress to PNG
+                    const dataUrl = canvas.toDataURL('image/png', 0.8)
+                    setData(prev => ({ ...prev, stampImage: dataUrl }))
+                }
+                img.src = event.target.result
             }
             reader.readAsDataURL(file)
         }
@@ -103,7 +162,17 @@ export default function InputPanel({ data, setData, t }) {
                     <label htmlFor="taxInclude" style={{ fontSize: '0.9rem' }}>{t.taxIncluded}</label>
                 </div>
 
-                {/* Layout & Color Section - Requires Login */}
+                {/* Date Picker */}
+                <div className="flex items-center gap-2 mb-3">
+                    <label style={{ fontSize: '0.9rem', minWidth: '60px' }}>📅 {t.date}</label>
+                    <input
+                        type="date"
+                        className="input-field"
+                        value={data.date}
+                        onChange={(e) => setData({ ...data, date: e.target.value })}
+                        style={{ flex: 1 }}
+                    />
+                </div>
                 <div style={{ position: 'relative' }}>
                     {/* Blur overlay for non-logged-in users */}
                     {!user && (
@@ -230,7 +299,77 @@ export default function InputPanel({ data, setData, t }) {
                         value={data.supplier.address}
                         onChange={(e) => setData({ ...data, supplier: { ...data.supplier, address: e.target.value } })}
                     />
+                    {/* Optional contact info */}
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '8px', marginBottom: '4px' }}>
+                        📞 연락처 (선택)
+                    </div>
+                    <div className="flex gap-2">
+                        <input
+                            className="input-field" placeholder="전화번호"
+                            value={data.supplier.phone || ''}
+                            onChange={(e) => setData({ ...data, supplier: { ...data.supplier, phone: e.target.value } })}
+                            style={{ flex: 1 }}
+                        />
+                        <input
+                            className="input-field" placeholder="팩스"
+                            value={data.supplier.fax || ''}
+                            onChange={(e) => setData({ ...data, supplier: { ...data.supplier, fax: e.target.value } })}
+                            style={{ flex: 1 }}
+                        />
+                    </div>
+                    <input
+                        className="input-field" placeholder="이메일"
+                        value={data.supplier.email || ''}
+                        onChange={(e) => setData({ ...data, supplier: { ...data.supplier, email: e.target.value } })}
+                    />
+
+                    {/* Stamp Input */}
+                    <div style={{ marginTop: '8px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
+                        <label className="label" style={{ fontSize: '0.85rem', marginBottom: '4px' }}>{t.stamp}</label>
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="file"
+                                accept="image/png"
+                                onChange={handleFileChange}
+                                className="input-field"
+                                style={{ fontSize: '0.8rem' }}
+                            />
+                            {data.stampImage && (
+                                <div style={{ fontSize: '0.75rem', color: '#10b981', whiteSpace: 'nowrap' }}>
+                                    ✓ 등록됨
+                                </div>
+                            )}
+                        </div>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                            {t.stampDesc}
+                        </p>
+                    </div>
                 </div>
+                {/* Save supplier button for logged-in users */}
+                {user && (
+                    <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button
+                            onClick={handleSaveSupplier}
+                            disabled={savingSupplier || !data.supplier.name}
+                            style={{
+                                padding: '6px 12px',
+                                fontSize: '0.8rem',
+                                background: supplierSaved ? '#10b981' : '#2563eb',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: savingSupplier || !data.supplier.name ? 'not-allowed' : 'pointer',
+                                opacity: savingSupplier || !data.supplier.name ? 0.6 : 1,
+                                fontWeight: '500'
+                            }}
+                        >
+                            {savingSupplier ? '저장 중...' : supplierSaved ? '✓ 저장됨' : '💾 공급자 정보 + 직인 저장'}
+                        </button>
+                        <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                            다음 로그인 시 자동 입력됩니다 (직인 포함)
+                        </span>
+                    </div>
+                )}
             </div>
 
             {/* Customer */}
@@ -429,14 +568,7 @@ export default function InputPanel({ data, setData, t }) {
                 </div>
             </div>
 
-            {/* Stamp */}
-            <div className="card">
-                <label className="label">{t.stamp}</label>
-                <input type="file" accept="image/png" onChange={handleFileChange} className="input-field" />
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                    {t.stampDesc}
-                </p>
-            </div>
+
 
             {/* Notes / Bank Account */}
             <div className="card">

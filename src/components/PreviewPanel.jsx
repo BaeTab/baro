@@ -385,6 +385,28 @@ export default function PreviewPanel({ data, t }) {
                 <div style={styles.footer}>
                     <div style={styles.greeting}>{t.greeting}</div>
                     <div style={styles.companyName}>{data.supplier.name || 'Company Name'}</div>
+                    {/* Contact Info */}
+                    {(data.supplier.phone || data.supplier.fax || data.supplier.email) && (
+                        <div style={{
+                            marginTop: '12px',
+                            fontSize: '10px',
+                            color: '#64748b',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            gap: '16px',
+                            flexWrap: 'wrap'
+                        }}>
+                            {data.supplier.phone && (
+                                <span>📞 {data.supplier.phone}</span>
+                            )}
+                            {data.supplier.fax && (
+                                <span>📠 {data.supplier.fax}</span>
+                            )}
+                            {data.supplier.email && (
+                                <span>✉️ {data.supplier.email}</span>
+                            )}
+                        </div>
+                    )}
                 </div>
 
             </div>

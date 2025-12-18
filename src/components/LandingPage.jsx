@@ -141,45 +141,49 @@ export default function LandingPage() {
                                 <div style={{ fontSize: '0.8rem', color: '#64748b' }}>날짜: 2024-12-18 | 번호: 2024-0001</div>
                             </div>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                            <div style={{ background: 'white', padding: '1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+                            <div style={{ background: 'white', padding: '1rem', borderRadius: '8px', border: '1px solid #e2e8f0', flex: '1 1 200px' }}>
                                 <div style={{ fontSize: '0.7rem', color: '#64748b', marginBottom: '0.5rem' }}>공급받는자</div>
                                 <div style={{ fontWeight: '600' }}>홍길동 귀하</div>
                             </div>
-                            <div style={{ background: 'white', padding: '1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                            <div style={{ background: 'white', padding: '1rem', borderRadius: '8px', border: '1px solid #e2e8f0', flex: '1 1 200px' }}>
                                 <div style={{ fontSize: '0.7rem', color: '#64748b', marginBottom: '0.5rem' }}>공급자</div>
                                 <div style={{ fontWeight: '600' }}>바로상사</div>
                             </div>
                         </div>
-                        <div style={{
-                            background: '#1e3a5f',
-                            color: 'white',
-                            padding: '0.75rem 1rem',
-                            borderRadius: '6px 6px 0 0',
-                            display: 'grid',
-                            gridTemplateColumns: '40px 1fr 60px 80px 100px',
-                            fontSize: '0.75rem',
-                            fontWeight: '600'
-                        }}>
-                            <span>No</span>
-                            <span>품목</span>
-                            <span style={{ textAlign: 'center' }}>수량</span>
-                            <span style={{ textAlign: 'right' }}>단가</span>
-                            <span style={{ textAlign: 'right' }}>공급가액</span>
-                        </div>
-                        <div style={{
-                            background: 'white',
-                            padding: '0.75rem 1rem',
-                            borderBottom: '1px solid #e2e8f0',
-                            display: 'grid',
-                            gridTemplateColumns: '40px 1fr 60px 80px 100px',
-                            fontSize: '0.85rem'
-                        }}>
-                            <span>1</span>
-                            <span>웹사이트 디자인</span>
-                            <span style={{ textAlign: 'center' }}>1</span>
-                            <span style={{ textAlign: 'right' }}>1,500,000</span>
-                            <span style={{ textAlign: 'right', fontWeight: '600' }}>1,500,000</span>
+                        <div style={{ overflowX: 'auto', paddingBottom: '0.5rem' }}>
+                            <div style={{ minWidth: '500px' }}>
+                                <div style={{
+                                    background: '#1e3a5f',
+                                    color: 'white',
+                                    padding: '0.75rem 1rem',
+                                    borderRadius: '6px 6px 0 0',
+                                    display: 'grid',
+                                    gridTemplateColumns: '40px 1fr 60px 80px 100px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: '600'
+                                }}>
+                                    <span>No</span>
+                                    <span>품목</span>
+                                    <span style={{ textAlign: 'center' }}>수량</span>
+                                    <span style={{ textAlign: 'right' }}>단가</span>
+                                    <span style={{ textAlign: 'right' }}>공급가액</span>
+                                </div>
+                                <div style={{
+                                    background: 'white',
+                                    padding: '0.75rem 1rem',
+                                    borderBottom: '1px solid #e2e8f0',
+                                    display: 'grid',
+                                    gridTemplateColumns: '40px 1fr 60px 80px 100px',
+                                    fontSize: '0.85rem'
+                                }}>
+                                    <span>1</span>
+                                    <span>웹사이트 디자인</span>
+                                    <span style={{ textAlign: 'center' }}>1</span>
+                                    <span style={{ textAlign: 'right' }}>1,500,000</span>
+                                    <span style={{ textAlign: 'right', fontWeight: '600' }}>1,500,000</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

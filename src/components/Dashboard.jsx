@@ -300,6 +300,27 @@ export default function Dashboard() {
                                             onClick={() => {
                                                 logout()
                                                 setShowProfileMenu(false)
+                                                // Reset data to initial state
+                                                setData({
+                                                    docType: 'QUOTE',
+                                                    layout: 'classic',
+                                                    colorScheme: 'blue',
+                                                    supplier: {
+                                                        name: '',
+                                                        regNum: '',
+                                                        owner: '',
+                                                        address: '',
+                                                        bizType: '',
+                                                        bizItem: ''
+                                                    },
+                                                    customer: '',
+                                                    items: [],
+                                                    taxRate: 0.1,
+                                                    isTaxIncluded: false,
+                                                    date: new Date().toISOString().split('T')[0],
+                                                    stampImage: null,
+                                                    notes: ''
+                                                })
                                             }}
                                             style={{
                                                 width: '100%',
