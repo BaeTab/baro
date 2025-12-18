@@ -100,7 +100,7 @@ baro/
 
 ```bash
 # 저장소 클론
-git clone https://github.com/your-username/baro.git
+git clone https://github.com/baetab/baro.git
 cd baro
 
 # 의존성 설치
